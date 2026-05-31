@@ -18,9 +18,7 @@ import {
 import { loadStoredDirectoryHandle, saveStoredDirectoryHandle } from './file-store.js';
 
 const editorTarget = document.querySelector('#editor');
-const directoryButton = document.querySelector('#directory-button');
 const directoryLabel = document.querySelector('#directory-label');
-const fileListButton = document.querySelector('#file-list-button');
 const fileListPanel = document.querySelector('#file-list-panel');
 const fileList = document.querySelector('#file-list');
 const saveButton = document.querySelector('#save-button');
@@ -57,7 +55,27 @@ const editor = createJSONEditor({
   }
 });
 
-directoryButton.addEventListener('click', async () => {
+directoryLabel.addEventListener('click', (event) => {
+  if (event.target.closest('.dir-edit-btn')) {
+    selectDirectoryHandler();
+    return;
+  }
+  toggleFileList();
+});
+
+directoryLabel.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+
+    if (event.target.closest('.dir-edit-btn')) {
+      selectDirectoryHandler();
+      return;
+    }
+    toggleFileList();
+  }
+});
+
+async function selectDirectoryHandler() {
   try {
     directoryHandle = await selectDirectory(window);
 
@@ -78,14 +96,14 @@ directoryButton.addEventListener('click', async () => {
   } finally {
     renderToolbar();
   }
-});
+}
 
-fileListButton.addEventListener('click', () => {
+function toggleFileList() {
   const nextOpen = fileListPanel.hidden;
 
   fileListPanel.hidden = !nextOpen;
-  fileListButton.setAttribute('aria-expanded', String(nextOpen));
-});
+  directoryLabel.setAttribute('aria-expanded', String(nextOpen));
+}
 
 fileList.addEventListener('click', async (event) => {
   const button = event.target.closest('button[data-action]');
@@ -213,12 +231,9 @@ async function refreshFiles() {
 
 function renderToolbar() {
   const directorySupported = supportsDirectoryAccess(window);
+  const dirText = directoryLabel.querySelector('.dir-text');
 
-  directoryButton.disabled = !directorySupported;
-  directoryButton.textContent = directoryHandle ? '更换目录' : '设置目录';
-  directoryLabel.textContent = directorySupported ? getDisplayDirectoryName(directoryHandle) : '目录不可用';
-  fileListButton.disabled = !directoryHandle;
-  fileListButton.textContent = currentFileName || `文件列表 (${files.length})`;
+  dirText.textContent = directorySupported ? getDisplayDirectoryName(directoryHandle) : '目录不可用';
   deleteCurrentButton.disabled = !directoryHandle || !currentFileName;
 
   renderFileList();
@@ -417,7 +432,7 @@ async function renameCurrentTarget() {
 
 function closeFileList() {
   fileListPanel.hidden = true;
-  fileListButton.setAttribute('aria-expanded', 'false');
+  directoryLabel.setAttribute('aria-expanded', 'false');
 }
 
 async function init() {
