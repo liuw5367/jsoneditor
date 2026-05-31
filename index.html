@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Editor</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar" aria-label="JSON editor toolbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">{ }</span>
+          <span>JSON Editor</span>
+        </div>
+        <div class="filebar">
+          <button id="directory-button" class="ghost-button" type="button">设置目录</button>
+          <span id="directory-label" class="directory-label">未设置</span>
+          <div class="file-list-wrap">
+            <button id="file-list-button" class="ghost-button" type="button" aria-expanded="false" aria-controls="file-list-panel">
+              文件列表
+            </button>
+            <div id="file-list-panel" class="file-list-panel" hidden>
+              <div id="file-list" class="file-list" role="listbox" aria-label="JSON 文件列表"></div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <span id="save-status" class="save-status" role="status">Ready</span>
+          <button id="save-new-button" class="secondary-button" type="button">新建保存</button>
+          <button id="save-button" class="save-button" type="button">保存</button>
+          <button id="delete-current-button" class="danger-button" type="button">删除</button>
+        </div>
+      </header>
+      <section class="editor-section" aria-label="JSON editor">
+        <div id="editor" class="editor"></div>
+      </section>
+    </main>
+    <dialog id="rename-dialog" class="rename-dialog">
+      <form id="rename-form" method="dialog">
+        <label class="rename-label" for="rename-input">文件名</label>
+        <input id="rename-input" class="rename-input" name="file-name" autocomplete="off" />
+        <div class="dialog-actions">
+          <button id="rename-cancel-button" class="ghost-button" type="button">取消</button>
+          <button class="save-button" type="submit">保存</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

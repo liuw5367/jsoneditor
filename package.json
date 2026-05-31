@@ -1,0 +1,22 @@
+{
+  "name": "clean-json-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test src/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "vanilla-jsoneditor": "^3.12.0"
+  },
+  "devDependencies": {
+    "vite": "^4.5.14"
+  }
+}
