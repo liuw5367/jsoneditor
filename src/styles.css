@@ -17,15 +17,14 @@
 }
 
 html,
-body,
-#app {
-    min-height: 100%;
+body {
+    height: 100%;
 }
 
 body {
     min-width: 320px;
-    min-height: 100vh;
     margin: 0;
+    overflow: hidden;
 }
 
 button {
@@ -35,7 +34,7 @@ button {
 .app-shell {
     display: grid;
     grid-template-rows: 48px minmax(0, 1fr);
-    min-height: 100vh;
+    height: 100vh;
     background: #f6f7f4;
 }
 
@@ -319,9 +318,26 @@ button {
 }
 
 .editor-section {
+    display: flex;
+    flex-direction: column;
     min-height: 0;
     padding: 10px;
+    overflow: hidden;
 }
+
+.editor {
+    flex: 1;
+    min-height: 0;
+    border: 1px solid #cdd4c5;
+    background: #ffffff;
+}
+
+.editor .jse-main {
+    height: 100%;
+    min-height: 100%;
+}
+
+
 
 .editor {
     height: 100%;
@@ -427,5 +443,6 @@ button {
 
     .editor-section {
         padding: 6px;
+        overflow: hidden;
     }
 }

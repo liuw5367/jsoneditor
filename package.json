@@ -10,9 +10,6 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test src/*.test.js"
   },
-  "engines": {
-    "node": ">=20"
-  },
   "dependencies": {
     "vanilla-jsoneditor": "^3.12.0"
   },

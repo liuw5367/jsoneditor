@@ -45,6 +45,7 @@ const editor = createJSONEditor({
     mainMenuBar: true,
     navigationBar: false,
     statusBar: true,
+    askToFormat: false,
     onChange(updatedContent) {
       currentContent = updatedContent;
       const text = contentToText(updatedContent);
