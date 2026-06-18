@@ -2,12 +2,14 @@ import { createJSONEditor, Mode } from 'vanilla-jsoneditor';
 import './styles.css';
 
 import { contentToText, getInitialContent, isJsonText, saveDraft } from './content.js';
+import { getFileListEmptyMessage, restoreDirectorySession } from './directory-session.js';
 import { createJsonFilename, downloadJsonText } from './download.js';
 import {
   deleteJsonFile,
-  ensureReadWritePermission,
+  ensureHandlePermission,
   getDisplayDirectoryName,
   listJsonFiles,
+  queryHandlePermission,
   readFileText,
   renameJsonFile,
   selectDirectory,
@@ -35,6 +37,7 @@ let directoryHandle = null;
 let currentFileHandle = null;
 let currentFileName = '';
 let files = [];
+let filesLoaded = false;
 let renameTargetName = '';
 
 const editor = createJSONEditor({
@@ -61,7 +64,7 @@ directoryLabel.addEventListener('click', (event) => {
     selectDirectoryHandler();
     return;
   }
-  toggleFileList();
+  void toggleFileList();
 });
 
 directoryLabel.addEventListener('keydown', (event) => {
@@ -72,7 +75,7 @@ directoryLabel.addEventListener('keydown', (event) => {
       selectDirectoryHandler();
       return;
     }
-    toggleFileList();
+    void toggleFileList();
   }
 });
 
@@ -80,13 +83,14 @@ async function selectDirectoryHandler() {
   try {
     directoryHandle = await selectDirectory(window);
 
-    if (!(await ensureReadWritePermission(directoryHandle))) {
+    if (!(await ensureHandlePermission(directoryHandle, 'readwrite'))) {
       setStatus('目录未授权');
       return;
     }
 
     currentFileHandle = null;
     currentFileName = '';
+    filesLoaded = false;
     await saveStoredDirectoryHandle(directoryHandle);
     await refreshFiles();
     setStatus('已设置目录');
@@ -99,11 +103,15 @@ async function selectDirectoryHandler() {
   }
 }
 
-function toggleFileList() {
+async function toggleFileList() {
   const nextOpen = fileListPanel.hidden;
 
   fileListPanel.hidden = !nextOpen;
   directoryLabel.setAttribute('aria-expanded', String(nextOpen));
+
+  if (nextOpen) {
+    await loadFilesForList();
+  }
 }
 
 fileList.addEventListener('click', async (event) => {
@@ -151,6 +159,11 @@ saveButton.addEventListener('click', async () => {
   }
 
   try {
+    if (!(await ensureHandlePermission(currentFileHandle ?? directoryHandle, 'readwrite'))) {
+      setStatus('目录未授权');
+      return;
+    }
+
     if (!currentFileHandle) {
       currentFileHandle = await directoryHandle.getFileHandle(currentFileName);
     }
@@ -173,6 +186,11 @@ deleteCurrentButton.addEventListener('click', async () => {
   }
 
   try {
+    if (!(await ensureHandlePermission(directoryHandle, 'readwrite'))) {
+      setStatus('目录未授权');
+      return;
+    }
+
     await deleteJsonFile(directoryHandle, currentFileName);
     currentFileHandle = null;
     currentFileName = '';
@@ -215,19 +233,33 @@ async function restoreStoredDirectory() {
     return;
   }
 
-  const storedHandle = await loadStoredDirectoryHandle();
+  const session = await restoreDirectorySession(loadStoredDirectoryHandle, queryHandlePermission);
 
-  if (!storedHandle || !(await ensureReadWritePermission(storedHandle))) {
-    return;
+  directoryHandle = session.handle;
+
+  if (session.shouldLoadFiles) {
+    await refreshFiles();
   }
-
-  directoryHandle = storedHandle;
-  await refreshFiles();
 }
 
 async function refreshFiles() {
   files = await listJsonFiles(directoryHandle);
+  filesLoaded = true;
   renderToolbar();
+}
+
+async function loadFilesForList() {
+  if (!directoryHandle || filesLoaded) {
+    return;
+  }
+
+  if (!(await ensureHandlePermission(directoryHandle, 'read'))) {
+    setStatus('目录未授权');
+    renderToolbar();
+    return;
+  }
+
+  await refreshFiles();
 }
 
 function renderToolbar() {
@@ -243,13 +275,14 @@ function renderToolbar() {
 function renderFileList() {
   fileList.replaceChildren();
 
-  if (!directoryHandle) {
-    fileList.append(createEmptyRow('先设置保存目录'));
-    return;
-  }
+  const emptyMessage = getFileListEmptyMessage({
+    directoryHandle,
+    filesLoaded,
+    filesCount: files.length
+  });
 
-  if (files.length === 0) {
-    fileList.append(createEmptyRow('目录里还没有 JSON 文件'));
+  if (emptyMessage) {
+    fileList.append(createEmptyRow(emptyMessage));
     return;
   }
 
@@ -309,6 +342,11 @@ async function openFile(fileName) {
   }
 
   try {
+    if (!(await ensureHandlePermission(file.handle, 'read'))) {
+      setStatus('文件未授权');
+      return;
+    }
+
     const text = await readFileText(file.handle);
 
     currentFileHandle = file.handle;
@@ -333,10 +371,11 @@ async function saveAsNewFile() {
   if (!directoryHandle && supportsDirectoryAccess(window)) {
     try {
       directoryHandle = await selectDirectory(window);
-      if (!(await ensureReadWritePermission(directoryHandle))) {
+      if (!(await ensureHandlePermission(directoryHandle, 'readwrite'))) {
         setStatus('目录未授权');
         return;
       }
+      filesLoaded = false;
       await saveStoredDirectoryHandle(directoryHandle);
     } catch (error) {
       if (error?.name !== 'AbortError') {
@@ -353,6 +392,11 @@ async function saveAsNewFile() {
   }
 
   try {
+    if (!(await ensureHandlePermission(directoryHandle, 'readwrite'))) {
+      setStatus('目录未授权');
+      return;
+    }
+
     currentFileName = createJsonFilename();
     currentFileHandle = await writeJsonFile(directoryHandle, currentFileName, text);
     await refreshFiles();
@@ -368,6 +412,11 @@ async function deleteFileFromList(fileName) {
   }
 
   try {
+    if (!(await ensureHandlePermission(directoryHandle, 'readwrite'))) {
+      setStatus('目录未授权');
+      return;
+    }
+
     await deleteJsonFile(directoryHandle, fileName);
 
     if (fileName === currentFileName) {
@@ -415,6 +464,11 @@ async function renameCurrentTarget() {
   }
 
   try {
+    if (!(await ensureHandlePermission(directoryHandle, 'readwrite'))) {
+      setStatus('目录未授权');
+      return;
+    }
+
     const nextHandle = await renameJsonFile(directoryHandle, renameTargetName, renameInput.value);
     const nextName = nextHandle.name;
 

@@ -3,9 +3,11 @@ import { describe, it } from 'node:test';
 
 import {
   deleteJsonFile,
+  ensureHandlePermission,
   getDisplayDirectoryName,
   listJsonFiles,
   normalizeJsonFileName,
+  queryHandlePermission,
   renameJsonFile,
   supportsDirectoryAccess,
   writeFileHandle,
@@ -94,6 +96,27 @@ describe('file system helpers', () => {
     assert.equal(getDisplayDirectoryName({ name: 'json-files' }), 'json-files');
     assert.equal(getDisplayDirectoryName(null), '未设置');
   });
+
+  it('queries read permission by default', async () => {
+    const handle = new FakePermissionHandle(['granted']);
+
+    assert.equal(await queryHandlePermission(handle), 'granted');
+    assert.deepEqual(handle.queryCalls, [{ mode: 'read' }]);
+  });
+
+  it('requests readwrite permission when needed', async () => {
+    const handle = new FakePermissionHandle(['prompt'], ['granted']);
+
+    assert.equal(await ensureHandlePermission(handle, 'readwrite'), true);
+    assert.deepEqual(handle.queryCalls, [{ mode: 'readwrite' }]);
+    assert.deepEqual(handle.requestCalls, [{ mode: 'readwrite' }]);
+  });
+
+  it('returns false when permission request is denied', async () => {
+    const handle = new FakePermissionHandle(['prompt'], ['denied']);
+
+    assert.equal(await ensureHandlePermission(handle, 'read'), false);
+  });
 });
 
 class FakeDirectoryHandle {
@@ -152,5 +175,24 @@ class FakeFileHandle {
       },
       close: async () => {}
     };
+  }
+}
+
+class FakePermissionHandle {
+  constructor(queryResults = [], requestResults = []) {
+    this.queryResults = queryResults;
+    this.requestResults = requestResults;
+    this.queryCalls = [];
+    this.requestCalls = [];
+  }
+
+  async queryPermission(options) {
+    this.queryCalls.push(options);
+    return this.queryResults.shift() ?? 'prompt';
+  }
+
+  async requestPermission(options) {
+    this.requestCalls.push(options);
+    return this.requestResults.shift() ?? 'denied';
   }
 }

@@ -32,19 +32,29 @@ export async function selectDirectory(windowRef = globalThis) {
   });
 }
 
-export async function ensureReadWritePermission(handle) {
+export async function queryHandlePermission(handle, mode = 'read') {
+  if (!handle) {
+    return 'denied';
+  }
+
+  if (typeof handle.queryPermission !== 'function') {
+    return 'granted';
+  }
+
+  return handle.queryPermission({ mode });
+}
+
+export async function ensureHandlePermission(handle, mode = 'read') {
   if (!handle) {
     return false;
   }
 
-  const options = { mode: 'readwrite' };
-
-  if (typeof handle.queryPermission === 'function' && (await handle.queryPermission(options)) === 'granted') {
+  if ((await queryHandlePermission(handle, mode)) === 'granted') {
     return true;
   }
 
   if (typeof handle.requestPermission === 'function') {
-    return (await handle.requestPermission(options)) === 'granted';
+    return (await handle.requestPermission({ mode })) === 'granted';
   }
 
   return true;
