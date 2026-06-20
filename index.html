@@ -13,6 +13,24 @@
                         <span class="brand-mark" aria-hidden="true">{ }</span>
                         <span>JSON Editor</span>
                     </div>
+                    <div class="workspace-switch" aria-label="工作模式">
+                        <button
+                            id="edit-mode-button"
+                            class="workspace-switch-button is-active"
+                            type="button"
+                            aria-pressed="true"
+                        >
+                            编辑
+                        </button>
+                        <button
+                            id="compare-mode-button"
+                            class="workspace-switch-button"
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            对比
+                        </button>
+                    </div>
                     <div class="filebar" style="margin-left: 18px">
                         <div class="file-list-wrap">
                             <span
@@ -55,9 +73,41 @@
                                 ></div>
                             </div>
                         </div>
+                        <span
+                            id="current-file-label"
+                            class="current-file-label"
+                            aria-label="当前文件"
+                            hidden
+                        ></span>
                     </div>
                 </div>
 
+                <div id="compare-topbar-actions" class="compare-topbar-actions" hidden>
+                    <div class="difference-menu">
+                        <div id="difference-counts" class="difference-counts" aria-label="JSON 差异统计">
+                            <button class="difference-count is-added" type="button" data-difference-type="added" aria-expanded="false" disabled>
+                                新增 <strong id="added-count">0</strong>
+                            </button>
+                            <span aria-hidden="true">·</span>
+                            <button class="difference-count is-removed" type="button" data-difference-type="removed" aria-expanded="false" disabled>
+                                删除 <strong id="removed-count">0</strong>
+                            </button>
+                            <span aria-hidden="true">·</span>
+                            <button class="difference-count is-changed" type="button" data-difference-type="changed" aria-expanded="false" disabled>
+                                修改 <strong id="changed-count">0</strong>
+                            </button>
+                        </div>
+                        <div id="difference-panel" class="difference-panel" hidden>
+                            <div id="difference-list" class="difference-list" role="list" aria-label="过滤后的 JSON 差异"></div>
+                        </div>
+                    </div>
+                    <button id="swap-compare-button" class="ghost-button" type="button">
+                        交换两侧
+                    </button>
+                    <button id="apply-compare-button" class="save-button" type="button" disabled>
+                        应用右侧到编辑器
+                    </button>
+                </div>
                 <div class="actions">
                     <span id="save-status" class="save-status" role="status"
                         >Ready</span
@@ -67,9 +117,15 @@
                         class="secondary-button"
                         type="button"
                     >
+                        <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M8 2v12M2 8h12" />
+                        </svg>
                         新建保存
                     </button>
                     <button id="save-button" class="save-button" type="button">
+                        <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M3 2.5h8l2 2V13H3zM5 2.5v4h6v-4M5.5 10h5" />
+                        </svg>
                         保存
                     </button>
                     <button
@@ -77,12 +133,35 @@
                         class="danger-button"
                         type="button"
                     >
+                        <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M2.5 4h11M6 2h4l.5 2h-5zM4.5 4l.7 9h5.6l.7-9M6.5 6.5v4M9.5 6.5v4" />
+                        </svg>
                         删除
                     </button>
                 </div>
             </header>
             <section class="editor-section" aria-label="JSON editor">
-                <div id="editor" class="editor"></div>
+                <div id="edit-workspace" class="edit-workspace">
+                    <div id="editor" class="editor"></div>
+                </div>
+                <div id="compare-workspace" class="compare-workspace" hidden>
+                    <div id="compare-message" class="compare-message" role="status" hidden></div>
+                    <div class="compare-grid">
+                        <header class="compare-pane-header">
+                            <strong>原始 JSON</strong>
+                            <select id="compare-left-file" class="compare-file-select" aria-label="载入原始 JSON 文件">
+                                <option value="">从目录载入...</option>
+                            </select>
+                        </header>
+                        <header class="compare-pane-header">
+                            <strong>目标 JSON</strong>
+                            <select id="compare-right-file" class="compare-file-select" aria-label="载入目标 JSON 文件">
+                                <option value="">从目录载入...</option>
+                            </select>
+                        </header>
+                        <div id="compare-merge-editor" class="compare-merge-editor" aria-label="JSON 文本差异"></div>
+                    </div>
+                </div>
             </section>
         </main>
         <dialog id="rename-dialog" class="rename-dialog">

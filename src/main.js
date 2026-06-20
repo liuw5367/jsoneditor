@@ -1,4 +1,7 @@
 import { createJSONEditor, Mode } from 'vanilla-jsoneditor';
+import { json } from '@codemirror/lang-json';
+import { MergeView } from '@codemirror/merge';
+import { EditorView, lineNumbers } from '@codemirror/view';
 import './styles.css';
 
 import { contentToText, getInitialContent, isJsonText, saveDraft } from './content.js';
@@ -18,9 +21,15 @@ import {
   writeJsonFile
 } from './file-system.js';
 import { loadStoredDirectoryHandle, saveStoredDirectoryHandle } from './file-store.js';
+import { filterDifferences, toggleDifferenceFilter } from './difference-filter.js';
+import { compareJsonTexts, formatJsonPath } from './json-diff.js';
+import { formatMergeContent, replaceMergeDocument } from './merge-content.js';
+import { synchronizeScroll } from './merge-scroll.js';
+import { getToolbarState } from './toolbar-state.js';
 
 const editorTarget = document.querySelector('#editor');
 const directoryLabel = document.querySelector('#directory-label');
+const currentFileLabel = document.querySelector('#current-file-label');
 const fileListPanel = document.querySelector('#file-list-panel');
 const fileList = document.querySelector('#file-list');
 const saveButton = document.querySelector('#save-button');
@@ -31,6 +40,21 @@ const renameDialog = document.querySelector('#rename-dialog');
 const renameForm = document.querySelector('#rename-form');
 const renameInput = document.querySelector('#rename-input');
 const renameCancelButton = document.querySelector('#rename-cancel-button');
+const editModeButton = document.querySelector('#edit-mode-button');
+const compareModeButton = document.querySelector('#compare-mode-button');
+const editWorkspace = document.querySelector('#edit-workspace');
+const compareWorkspace = document.querySelector('#compare-workspace');
+const compareTopbarActions = document.querySelector('#compare-topbar-actions');
+const compareMessage = document.querySelector('#compare-message');
+const compareMergeTarget = document.querySelector('#compare-merge-editor');
+const compareLeftFile = document.querySelector('#compare-left-file');
+const compareRightFile = document.querySelector('#compare-right-file');
+const swapCompareButton = document.querySelector('#swap-compare-button');
+const applyCompareButton = document.querySelector('#apply-compare-button');
+const differenceCounts = document.querySelector('#difference-counts');
+const differencePanel = document.querySelector('#difference-panel');
+const differenceList = document.querySelector('#difference-list');
+const differenceCountButtons = [...differenceCounts.querySelectorAll('[data-difference-type]')];
 
 let currentContent = getInitialContent();
 let directoryHandle = null;
@@ -39,6 +63,9 @@ let currentFileName = '';
 let files = [];
 let filesLoaded = false;
 let renameTargetName = '';
+let compareInitialized = false;
+let compareResult = null;
+let activeDifferenceFilter = '';
 
 const editor = createJSONEditor({
   target: editorTarget,
@@ -57,6 +84,48 @@ const editor = createJSONEditor({
       updateStatus(text);
     }
   }
+});
+
+const mergeEditorExtensions = [
+  lineNumbers(),
+  json(),
+  EditorView.lineWrapping,
+  EditorView.updateListener.of((update) => {
+    if (update.docChanged) {
+      renderComparison();
+    }
+  })
+];
+
+const compareMergeEditor = new MergeView({
+  a: { doc: '{}', extensions: mergeEditorExtensions },
+  b: { doc: '{}', extensions: mergeEditorExtensions },
+  parent: compareMergeTarget,
+  orientation: 'a-b',
+  highlightChanges: true,
+  gutter: true
+});
+
+synchronizeScroll(compareMergeEditor.a.scrollDOM, compareMergeEditor.b.scrollDOM);
+
+editModeButton.addEventListener('click', () => switchWorkspace('edit'));
+compareModeButton.addEventListener('click', () => switchWorkspace('compare'));
+swapCompareButton.addEventListener('click', swapCompareContents);
+applyCompareButton.addEventListener('click', applyRightComparison);
+compareLeftFile.addEventListener('change', () => loadFileIntoComparison(compareLeftFile, compareMergeEditor.a));
+compareRightFile.addEventListener('change', () => loadFileIntoComparison(compareRightFile, compareMergeEditor.b));
+differenceCounts.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-difference-type]');
+
+  if (!button) {
+    return;
+  }
+
+  const type = button.dataset.differenceType;
+  const count = compareResult?.valid ? compareResult.counts[type] : 0;
+
+  activeDifferenceFilter = toggleDifferenceFilter(activeDifferenceFilter, type, count);
+  renderDifferencePopover();
 });
 
 directoryLabel.addEventListener('click', (event) => {
@@ -211,11 +280,22 @@ renameForm.addEventListener('submit', async (event) => {
 });
 
 document.addEventListener('click', (event) => {
-  if (fileListPanel.hidden || event.target.closest('.file-list-wrap')) {
+  if (!fileListPanel.hidden && !event.target.closest('.file-list-wrap')) {
+    closeFileList();
+  }
+
+  if (!differencePanel.hidden && !event.target.closest('.difference-menu')) {
+    closeDifferencePopover();
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') {
     return;
   }
 
   closeFileList();
+  closeDifferencePopover();
 });
 
 init();
@@ -265,11 +345,185 @@ async function loadFilesForList() {
 function renderToolbar() {
   const directorySupported = supportsDirectoryAccess(window);
   const dirText = directoryLabel.querySelector('.dir-text');
+  const toolbarState = getToolbarState(currentFileName);
 
   dirText.textContent = directorySupported ? getDisplayDirectoryName(directoryHandle) : '目录不可用';
-  deleteCurrentButton.disabled = !directoryHandle || !currentFileName;
+  currentFileLabel.textContent = toolbarState.fileName;
+  currentFileLabel.title = toolbarState.fileName;
+  currentFileLabel.hidden = !toolbarState.hasCurrentFile;
+  saveNewButton.hidden = !toolbarState.showSaveNew;
+  saveButton.hidden = !toolbarState.showSave;
+  deleteCurrentButton.hidden = !toolbarState.showDelete;
+  deleteCurrentButton.disabled = !directoryHandle || !toolbarState.hasCurrentFile;
 
   renderFileList();
+  renderCompareFileOptions();
+}
+
+async function switchWorkspace(workspace) {
+  const isCompare = workspace === 'compare';
+
+  editWorkspace.hidden = isCompare;
+  compareWorkspace.hidden = !isCompare;
+  editModeButton.classList.toggle('is-active', !isCompare);
+  compareModeButton.classList.toggle('is-active', isCompare);
+  editModeButton.setAttribute('aria-pressed', String(!isCompare));
+  compareModeButton.setAttribute('aria-pressed', String(isCompare));
+  document.querySelector('.actions').hidden = isCompare;
+  compareTopbarActions.hidden = !isCompare;
+
+  if (!isCompare) {
+    closeDifferencePopover();
+    return;
+  }
+
+  if (!compareInitialized) {
+    currentContent = editor.get();
+    setMergeDocument(compareMergeEditor.a, formatMergeContent(contentToText(currentContent)));
+    setMergeDocument(compareMergeEditor.b, '{}');
+    compareInitialized = true;
+  }
+
+  await loadFilesForList();
+  renderCompareFileOptions();
+  renderComparison();
+}
+
+function renderComparison() {
+  const leftText = compareMergeEditor.a.state.doc.toString();
+  const rightText = compareMergeEditor.b.state.doc.toString();
+
+  compareResult = compareJsonTexts(leftText, rightText);
+
+  if (!compareResult.valid) {
+    compareMessage.textContent = [compareResult.errors.left, compareResult.errors.right].filter(Boolean).join('，');
+    compareMessage.hidden = false;
+    applyCompareButton.disabled = true;
+    updateDifferenceCounts({ added: 0, removed: 0, changed: 0 });
+    closeDifferencePopover();
+    return;
+  }
+
+  compareMessage.hidden = true;
+  applyCompareButton.disabled = false;
+  updateDifferenceCounts(compareResult.counts);
+
+  if (activeDifferenceFilter && compareResult.counts[activeDifferenceFilter] === 0) {
+    closeDifferencePopover();
+    return;
+  }
+
+  renderDifferencePopover();
+}
+
+function createDifferenceRow(difference) {
+  const row = document.createElement('div');
+  const labels = { added: '新增', removed: '删除', changed: '修改' };
+
+  row.className = `difference-row is-${difference.type}`;
+  row.setAttribute('role', 'listitem');
+  row.textContent = `${labels[difference.type]} ${formatJsonPath(difference.path)}`;
+  return row;
+}
+
+function updateDifferenceCounts(counts) {
+  for (const button of differenceCountButtons) {
+    const type = button.dataset.differenceType;
+    const count = counts[type];
+
+    button.querySelector('strong').textContent = count;
+    button.disabled = count === 0;
+  }
+}
+
+function renderDifferencePopover() {
+  differenceList.replaceChildren();
+
+  for (const button of differenceCountButtons) {
+    const isActive = button.dataset.differenceType === activeDifferenceFilter;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-expanded', String(isActive));
+  }
+
+  if (!activeDifferenceFilter || !compareResult?.valid) {
+    differencePanel.hidden = true;
+    return;
+  }
+
+  for (const difference of filterDifferences(compareResult.differences, activeDifferenceFilter)) {
+    differenceList.append(createDifferenceRow(difference));
+  }
+
+  differencePanel.hidden = false;
+}
+
+function closeDifferencePopover() {
+  activeDifferenceFilter = '';
+  renderDifferencePopover();
+}
+
+function swapCompareContents() {
+  const leftContent = compareMergeEditor.a.state.doc.toString();
+  const rightContent = compareMergeEditor.b.state.doc.toString();
+
+  setMergeDocument(compareMergeEditor.a, rightContent);
+  setMergeDocument(compareMergeEditor.b, leftContent);
+  compareLeftFile.value = '';
+  compareRightFile.value = '';
+  renderComparison();
+}
+
+function applyRightComparison() {
+  if (!compareResult?.valid) {
+    return;
+  }
+
+  const text = compareMergeEditor.b.state.doc.toString();
+  currentContent = { text };
+
+  editor.set({ text });
+  saveDraft(localStorage, text);
+  updateStatus(text);
+  void switchWorkspace('edit');
+}
+
+async function loadFileIntoComparison(select, targetEditor) {
+  const file = files.find((item) => item.name === select.value);
+
+  if (!file) {
+    return;
+  }
+
+  try {
+    if (!(await ensureHandlePermission(file.handle, 'read'))) {
+      compareMessage.textContent = '文件未授权';
+      compareMessage.hidden = false;
+      return;
+    }
+
+    setMergeDocument(targetEditor, formatMergeContent(await readFileText(file.handle)));
+    renderComparison();
+  } catch (error) {
+    compareMessage.textContent = error.message || '读取文件失败';
+    compareMessage.hidden = false;
+  }
+}
+
+function setMergeDocument(targetEditor, text) {
+  targetEditor.dispatch(replaceMergeDocument(targetEditor.state, text));
+}
+
+function renderCompareFileOptions() {
+  for (const select of [compareLeftFile, compareRightFile]) {
+    const selectedName = select.value;
+
+    select.replaceChildren(new Option('从目录载入...', ''));
+    for (const file of files) {
+      select.append(new Option(file.name, file.name));
+    }
+    select.value = files.some((file) => file.name === selectedName) ? selectedName : '';
+    select.disabled = files.length === 0;
+  }
 }
 
 function renderFileList() {
