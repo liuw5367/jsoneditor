@@ -8,7 +8,7 @@
     <body>
         <main class="app-shell">
             <header class="topbar" aria-label="JSON editor toolbar">
-                <div style="display: flex; align-items: center">
+                <div class="workspace-context">
                     <div class="brand">
                         <span class="brand-mark" aria-hidden="true">{ }</span>
                         <span>JSON Editor</span>
@@ -31,35 +31,40 @@
                             对比
                         </button>
                     </div>
-                    <div class="filebar" style="margin-left: 18px">
+                    <div class="filebar">
                         <div class="file-list-wrap">
-                            <span
-                                id="directory-label"
-                                class="directory-label"
-                                role="button"
-                                tabindex="0"
-                                aria-expanded="false"
-                            >
-                                <svg
-                                    class="dir-icon"
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M2 6V4c0-.55.45-1 1-1h4.5l2 2H17c.55 0 1 .45 1 1v1H2zm-1 2h18l-1.5 8c-.1.55-.55 1-1.1 1H3.6c-.55 0-1-.45-1.1-1L1 8z"
-                                    />
-                                </svg>
-                                <span class="dir-text">未设置</span>
+                            <div class="directory-controls">
                                 <button
+                                    id="directory-label"
+                                    class="directory-label"
+                                    type="button"
+                                    aria-expanded="false"
+                                >
+                                    <svg
+                                        class="dir-icon"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M2 6V4c0-.55.45-1 1-1h4.5l2 2H17c.55 0 1 .45 1 1v1H2zm-1 2h18l-1.5 8c-.1.55-.55 1-1.1 1H3.6c-.55 0-1-.45-1.1-1L1 8z"
+                                        />
+                                    </svg>
+                                    <span class="dir-text">未设置</span>
+                                </button>
+                                <button
+                                    id="directory-edit-button"
                                     class="dir-edit-btn"
+                                    type="button"
                                     aria-label="切换目录"
                                 >
-                                    ✎
+                                    <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M1.5 4.5h5l1.5 1.5h6.5v7.5h-13zM10.5 8v4M8.5 10h4" />
+                                    </svg>
                                 </button>
-                            </span>
+                            </div>
                             <div
                                 id="file-list-panel"
                                 class="file-list-panel"

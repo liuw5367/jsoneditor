@@ -1,6 +1,27 @@
 :root {
-    color: #1b1f23;
-    background: #f6f7f4;
+    color: #1f271f;
+    background: #f4f6f1;
+    --color-canvas: #f4f6f1;
+    --color-surface: #fbfcf8;
+    --color-surface-subtle: #f0f3ec;
+    --color-surface-hover: #e9efe5;
+    --color-border: #cbd2c5;
+    --color-border-strong: #b8c2b0;
+    --color-text: #1f271f;
+    --color-text-muted: #697166;
+    --color-accent: #2f684c;
+    --color-accent-hover: #27573f;
+    --color-accent-soft: #e3ece0;
+    --color-danger: #9c4141;
+    --color-danger-soft: #fff4f1;
+    --focus-ring: #a9d8bd;
+    --radius-control: 6px;
+    --control-height: 30px;
+    --space-1: 4px;
+    --space-2: 6px;
+    --space-3: 8px;
+    --space-4: 10px;
+    --space-5: 14px;
     --popover-max-height: min(360px, calc(100vh - 96px));
     font-family:
         ui-sans-serif,
@@ -11,6 +32,8 @@
         sans-serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -36,34 +59,43 @@ button {
     font: inherit;
 }
 
+button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
 .app-shell {
     display: grid;
     grid-template-rows: 48px minmax(0, 1fr);
     height: 100vh;
-    background: #f6f7f4;
+    background: var(--color-canvas);
 }
 
 .topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    border-bottom: 1px solid #d7dbd1;
-    padding: 0 14px;
-    background: #fbfcf8;
+    gap: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 var(--space-5);
+    background: var(--color-surface);
 }
 
+.workspace-context,
 .brand,
 .filebar,
 .actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-4);
     min-width: 0;
 }
 
+.workspace-context {
+    flex: 1 1 auto;
+}
+
 .brand {
-    color: #222820;
+    color: var(--color-text);
     font-size: 14px;
     font-weight: 650;
     white-space: nowrap;
@@ -71,11 +103,12 @@ button {
 
 .workspace-switch {
     display: inline-flex;
-    margin-left: 14px;
-    border: 1px solid #c4ccbd;
-    border-radius: 6px;
+    flex: 0 0 auto;
+    margin-left: var(--space-1);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
     padding: 2px;
-    background: #f1f4ed;
+    background: var(--color-surface-subtle);
 }
 
 .workspace-switch-button {
@@ -83,14 +116,15 @@ button {
     border: 0;
     border-radius: 4px;
     padding: 0 10px;
-    color: #69705f;
+    color: var(--color-text-muted);
     background: transparent;
     cursor: pointer;
     font-size: 12px;
+    white-space: nowrap;
 }
 
 .workspace-switch-button.is-active {
-    color: #315d44;
+    color: var(--color-accent);
     background: #ffffff;
     box-shadow: 0 1px 3px rgb(28 40 28 / 12%);
     font-weight: 650;
@@ -101,10 +135,10 @@ button {
     place-items: center;
     width: 28px;
     height: 28px;
-    border: 1px solid #b9c3ad;
-    border-radius: 6px;
-    color: #315d44;
-    background: #eef3e8;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
     font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
     font-size: 13px;
     font-weight: 700;
@@ -113,14 +147,15 @@ button {
 .filebar {
     flex: 1 1 auto;
     justify-content: flex-start;
+    margin-left: var(--space-3);
 }
 
 .current-file-label {
     max-width: 240px;
     overflow: hidden;
-    border-left: 1px solid #d7dbd1;
+    border-left: 1px solid var(--color-border);
     padding-left: 10px;
-    color: #28342a;
+    color: var(--color-text);
     font-size: 13px;
     font-weight: 650;
     text-overflow: ellipsis;
@@ -132,9 +167,12 @@ button {
     align-items: center;
     gap: 6px;
     max-width: 200px;
+    min-width: 0;
+    height: 28px;
     overflow: hidden;
-    color: #536052;
-    font-size: 14px;
+    border: 1px solid transparent;
+    color: var(--color-text-muted);
+    font-size: 13px;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
@@ -143,12 +181,19 @@ button {
     user-select: none;
 }
 
+.directory-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
 .directory-label:hover {
-    background: #eef3e8;
+    border-color: var(--color-border);
+    background: var(--color-surface-hover);
 }
 
 .directory-label:focus-visible {
-    outline: 3px solid #a9d8bd;
+    outline: 3px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -169,22 +214,22 @@ button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    border: none;
-    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
     padding: 0;
-    color: #8a9884;
-    background: transparent;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
     cursor: pointer;
     flex-shrink: 0;
-    font-size: 15px;
     line-height: 1;
 }
 
 .dir-edit-btn:hover {
-    color: #315d44;
-    background: #dce4d4;
+    border-color: var(--color-border-strong);
+    color: var(--color-accent);
+    background: var(--color-surface-hover);
 }
 
 .dir-edit-btn:focus-visible {
@@ -257,7 +302,7 @@ button {
 
 .save-status {
     overflow: hidden;
-    color: #69705f;
+    color: var(--color-text-muted);
     font-size: 12px;
     line-height: 1;
     text-overflow: ellipsis;
@@ -266,58 +311,52 @@ button {
 
 .ghost-button,
 .secondary-button,
-.save-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 30px;
-    border: 1px solid #2f684c;
-    border-radius: 5px;
-    padding: 0 11px;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-.ghost-button {
-    color: #315d44;
-    background: #ffffff;
-}
-
-.ghost-button:hover {
-    background: #eef3e8;
-}
-
-.secondary-button {
-    color: #315d44;
-    background: #eaf1e8;
-}
-
-.secondary-button:hover {
-    background: #dfeadd;
-}
-
-.save-button {
-    min-width: 64px;
-    color: #ffffff;
-    background: #2f684c;
-}
-
-.save-button:hover {
-    background: #27573f;
-}
-
+.save-button,
 .danger-button {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 30px;
-    border: 1px solid #a14343;
-    border-radius: 5px;
+    height: var(--control-height);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
     padding: 0 10px;
-    color: #a14343;
-    background: #fff7f5;
     cursor: pointer;
+    font-size: 13px;
     white-space: nowrap;
+}
+
+.ghost-button {
+    color: var(--color-accent);
+    background: #ffffff;
+}
+
+.ghost-button:hover {
+    background: var(--color-surface-hover);
+}
+
+.secondary-button {
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
+}
+
+.secondary-button:hover {
+    background: #d7e5d3;
+}
+
+.save-button {
+    min-width: 64px;
+    border-color: var(--color-accent);
+    color: #ffffff;
+    background: var(--color-accent);
+}
+
+.save-button:hover {
+    background: var(--color-accent-hover);
+}
+
+.danger-button {
+    color: var(--color-danger);
+    background: transparent;
 }
 
 .button-icon {
@@ -331,7 +370,8 @@ button {
 }
 
 .danger-button:hover {
-    background: #ffe9e3;
+    border-color: #d8aaaa;
+    background: var(--color-danger-soft);
 }
 
 .icon-button {
@@ -368,7 +408,7 @@ button {
 .ghost-button:focus-visible,
 .secondary-button:focus-visible,
 .save-button:focus-visible {
-    outline: 3px solid #a9d8bd;
+    outline: 3px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -382,7 +422,7 @@ button {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 10px;
+    padding: var(--space-4);
     overflow: hidden;
 }
 
@@ -637,14 +677,17 @@ button {
 
 .editor {
     flex: 1;
-    min-height: 0;
-    border: 1px solid #cdd4c5;
+    height: 100%;
+    min-height: 480px;
+    border: 1px solid var(--color-border);
     background: #ffffff;
-    --jse-theme-color: #dfeadd;
-    --jse-theme-color-highlight: #cfdfcc;
-    --jse-menu-color: #315d44;
-    --jse-button-primary-background: #2f684c;
-    --jse-button-primary-background-highlight: #27573f;
+    --jse-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --jse-font-size: 13px;
+    --jse-theme-color: var(--color-accent-soft);
+    --jse-theme-color-highlight: #d1e0cd;
+    --jse-menu-color: var(--color-accent);
+    --jse-button-primary-background: var(--color-accent);
+    --jse-button-primary-background-highlight: var(--color-accent-hover);
     --jse-selection-background-color: #dce8d8;
     --jse-selection-background-inactive-color: #edf3e9;
 }
@@ -654,13 +697,23 @@ button {
     min-height: 100%;
 }
 
+.editor .jse-menu {
+    border-bottom-color: var(--color-border);
+    background: var(--color-surface-subtle);
+}
 
+.editor .jse-menu button {
+    min-width: 30px;
+    height: 30px;
+    color: var(--color-accent);
+}
 
-.editor {
-    height: 100%;
-    min-height: 480px;
-    border: 1px solid #cdd4c5;
-    background: #ffffff;
+.editor .jse-menu button.jse-format,
+.editor .jse-menu button.jse-compact {
+    width: auto;
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
+    font-size: 12px;
 }
 
 .rename-dialog {
@@ -708,10 +761,6 @@ button {
     gap: 8px;
 }
 
-.editor .jse-main {
-    min-height: 100%;
-}
-
 @media (max-width: 860px) {
     .topbar {
         flex-wrap: wrap;
@@ -730,6 +779,7 @@ button {
         flex-basis: 100%;
         justify-content: flex-start;
         overflow-x: auto;
+        margin-left: 0;
     }
 
     .compare-grid {
@@ -748,7 +798,7 @@ button {
         overflow: hidden;
     }
 
-    .topbar > div:first-child {
+    .workspace-context {
         width: 100%;
         min-width: 0;
         overflow: hidden;
@@ -758,9 +808,18 @@ button {
         font-size: 14px;
     }
 
+    .brand > span:last-child {
+        display: none;
+    }
+
     .actions {
         gap: 6px;
         overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .actions::-webkit-scrollbar {
+        display: none;
     }
 
     .compare-topbar-actions {

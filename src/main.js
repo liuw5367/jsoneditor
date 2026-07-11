@@ -22,6 +22,7 @@ import {
 } from './file-system.js';
 import { loadStoredDirectoryHandle, saveStoredDirectoryHandle } from './file-store.js';
 import { filterDifferences, toggleDifferenceFilter } from './difference-filter.js';
+import { reorderEditorMenu } from './editor-menu.js';
 import { compareJsonTexts, formatJsonPath } from './json-diff.js';
 import { formatMergeContent, replaceMergeDocument } from './merge-content.js';
 import { synchronizeScroll } from './merge-scroll.js';
@@ -29,6 +30,7 @@ import { getToolbarState } from './toolbar-state.js';
 
 const editorTarget = document.querySelector('#editor');
 const directoryLabel = document.querySelector('#directory-label');
+const directoryEditButton = document.querySelector('#directory-edit-button');
 const currentFileLabel = document.querySelector('#current-file-label');
 const fileListPanel = document.querySelector('#file-list-panel');
 const fileList = document.querySelector('#file-list');
@@ -76,6 +78,7 @@ const editor = createJSONEditor({
     navigationBar: false,
     statusBar: true,
     askToFormat: false,
+    onRenderMenu: reorderEditorMenu,
     onChange(updatedContent) {
       currentContent = updatedContent;
       const text = contentToText(updatedContent);
@@ -128,24 +131,12 @@ differenceCounts.addEventListener('click', (event) => {
   renderDifferencePopover();
 });
 
-directoryLabel.addEventListener('click', (event) => {
-  if (event.target.closest('.dir-edit-btn')) {
-    selectDirectoryHandler();
-    return;
-  }
+directoryLabel.addEventListener('click', () => {
   void toggleFileList();
 });
 
-directoryLabel.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-
-    if (event.target.closest('.dir-edit-btn')) {
-      selectDirectoryHandler();
-      return;
-    }
-    void toggleFileList();
-  }
+directoryEditButton.addEventListener('click', () => {
+  void selectDirectoryHandler();
 });
 
 async function selectDirectoryHandler() {
