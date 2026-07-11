@@ -89,6 +89,8 @@ describe('editor menu', () => {
     assert.equal(reordered[1].text, '格式化');
     assert.equal(reordered[2].text, '智能格式化');
     assert.equal(reordered[2].onClick, onSmartFormat);
+    assert.deepEqual(reordered[2].icon.icon.slice(0, 2), [512, 512]);
+    assert.match(reordered[2].icon.icon[4], /448,512/);
     assert.equal(reordered[3].text, '单行');
   });
 

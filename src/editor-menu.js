@@ -3,6 +3,17 @@ const ACTION_LABELS = new Map([
   ['Format JSON:', '格式化'],
   ['Compact JSON:', '单行']
 ]);
+const SMART_FORMAT_ICON = {
+  prefix: 'fas',
+  iconName: 'format-smart',
+  icon: [
+    512,
+    512,
+    [],
+    'e000',
+    'm 448,512 -15,-49 -49,-15 49,-15 15,-49 15,49 49,15 -45,15 zM 335,512 294,376 156,335 292,294 333,156 374,292 512,333 376,374 Z M 0,32 V 96 H 512 V 32 Z M 0,288 v 64 h 128 v -64 Z M 0,160 v 64 h 256 v -64 Z'
+  ]
+};
 
 export function reorderEditorMenu(items, { mode, onSmartFormat } = {}) {
   const preferredActionEntries = PREFERRED_ACTION_TITLES.flatMap((title) => {
@@ -20,6 +31,7 @@ export function reorderEditorMenu(items, { mode, onSmartFormat } = {}) {
       const smartFormatAction = mode === 'text' && onSmartFormat
         ? [{
             type: 'button',
+            icon: SMART_FORMAT_ICON,
             text: '智能格式化',
             title: '智能格式化 JSON (Ctrl+J)',
             className: 'jse-format-smart',
