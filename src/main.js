@@ -26,6 +26,11 @@ import { reorderEditorMenu } from './editor-menu.js';
 import { compareJsonTexts, formatJsonPath } from './json-diff.js';
 import { formatMergeContent, replaceMergeDocument } from './merge-content.js';
 import { synchronizeScroll } from './merge-scroll.js';
+import {
+  formatJsonSmart,
+  loadSmartFormatLineLength,
+  saveSmartFormatLineLength
+} from './smart-format.js';
 import { getToolbarState } from './toolbar-state.js';
 
 const editorTarget = document.querySelector('#editor');
@@ -38,6 +43,12 @@ const saveButton = document.querySelector('#save-button');
 const saveNewButton = document.querySelector('#save-new-button');
 const deleteCurrentButton = document.querySelector('#delete-current-button');
 const saveStatus = document.querySelector('#save-status');
+const settingsButton = document.querySelector('#settings-button');
+const settingsDialog = document.querySelector('#settings-dialog');
+const settingsForm = document.querySelector('#settings-form');
+const settingsInput = document.querySelector('#smart-format-line-length');
+const settingsError = document.querySelector('#settings-error');
+const settingsCancelButton = document.querySelector('#settings-cancel-button');
 const renameDialog = document.querySelector('#rename-dialog');
 const renameForm = document.querySelector('#rename-form');
 const renameInput = document.querySelector('#rename-input');
@@ -68,6 +79,7 @@ let renameTargetName = '';
 let compareInitialized = false;
 let compareResult = null;
 let activeDifferenceFilter = '';
+let smartFormatLineLength = loadSmartFormatLineLength();
 
 const editor = createJSONEditor({
   target: editorTarget,
@@ -78,7 +90,12 @@ const editor = createJSONEditor({
     navigationBar: false,
     statusBar: true,
     askToFormat: false,
-    onRenderMenu: reorderEditorMenu,
+    onRenderMenu(items, context) {
+      return reorderEditorMenu(items, {
+        mode: context.mode,
+        onSmartFormat: smartFormatCurrentContent
+      });
+    },
     onChange(updatedContent) {
       currentContent = updatedContent;
       const text = contentToText(updatedContent);
@@ -111,6 +128,18 @@ const compareMergeEditor = new MergeView({
 
 synchronizeScroll(compareMergeEditor.a.scrollDOM, compareMergeEditor.b.scrollDOM);
 
+settingsButton.addEventListener('click', openSettingsDialog);
+settingsCancelButton.addEventListener('click', () => settingsDialog.close());
+settingsInput.addEventListener('input', clearSettingsError);
+settingsForm.addEventListener('submit', saveSettings);
+editorTarget.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'j') {
+    event.preventDefault();
+    event.stopPropagation();
+    void smartFormatCurrentContent();
+  }
+}, true);
+
 editModeButton.addEventListener('click', () => switchWorkspace('edit'));
 compareModeButton.addEventListener('click', () => switchWorkspace('compare'));
 swapCompareButton.addEventListener('click', swapCompareContents);
@@ -138,6 +167,50 @@ directoryLabel.addEventListener('click', () => {
 directoryEditButton.addEventListener('click', () => {
   void selectDirectoryHandler();
 });
+
+async function smartFormatCurrentContent() {
+  const content = editor.get();
+  const text = contentToText(content);
+
+  try {
+    const formattedText = await formatJsonSmart(text, {
+      indentation: 2,
+      maxLineLength: smartFormatLineLength
+    });
+
+    editor.update({ text: formattedText });
+    setStatus(`已智能格式化，最大行宽 ${smartFormatLineLength}`);
+  } catch {
+    setStatus('智能格式化失败，请检查 JSON');
+  }
+}
+
+function openSettingsDialog() {
+  settingsInput.value = String(smartFormatLineLength);
+  clearSettingsError();
+  settingsDialog.showModal();
+  settingsInput.focus();
+  settingsInput.select();
+}
+
+function saveSettings(event) {
+  event.preventDefault();
+
+  try {
+    smartFormatLineLength = saveSmartFormatLineLength(localStorage, settingsInput.value);
+    settingsDialog.close();
+    setStatus(`智能格式化行宽已设为 ${smartFormatLineLength}`);
+  } catch (error) {
+    settingsError.textContent = error.message;
+    settingsError.hidden = false;
+    settingsInput.focus();
+  }
+}
+
+function clearSettingsError() {
+  settingsError.textContent = '';
+  settingsError.hidden = true;
+}
 
 async function selectDirectoryHandler() {
   try {

@@ -114,6 +114,17 @@
                     </button>
                 </div>
                 <div class="actions">
+                    <button
+                        id="settings-button"
+                        class="icon-button settings-button"
+                        type="button"
+                        aria-label="智能格式化设置"
+                        title="智能格式化设置"
+                    >
+                        <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M2 4h12M2 8h12M2 12h12M5 2.5v3M11 6.5v3M7 10.5v3" />
+                        </svg>
+                    </button>
                     <span id="save-status" class="save-status" role="status"
                         >Ready</span
                     >
@@ -187,6 +198,34 @@
                         取消
                     </button>
                     <button class="save-button" type="submit">保存</button>
+                </div>
+            </form>
+        </dialog>
+        <dialog id="settings-dialog" class="settings-dialog">
+            <form id="settings-form" method="dialog" novalidate>
+                <div>
+                    <label class="settings-label" for="smart-format-line-length">
+                        智能格式化最大行宽
+                    </label>
+                    <p class="settings-help">短数组和对象会尽量保持在这个宽度以内。</p>
+                </div>
+                <input
+                    id="smart-format-line-length"
+                    class="settings-input"
+                    name="smart-format-line-length"
+                    type="number"
+                    min="40"
+                    max="500"
+                    step="1"
+                    inputmode="numeric"
+                    required
+                />
+                <p id="settings-error" class="settings-error" role="alert" hidden></p>
+                <div class="dialog-actions">
+                    <button id="settings-cancel-button" class="ghost-button" type="button">
+                        取消
+                    </button>
+                    <button class="save-button" type="submit">保存设置</button>
                 </div>
             </form>
         </dialog>

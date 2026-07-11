@@ -4,7 +4,7 @@ const ACTION_LABELS = new Map([
   ['Compact JSON:', '单行']
 ]);
 
-export function reorderEditorMenu(items) {
+export function reorderEditorMenu(items, { mode, onSmartFormat } = {}) {
   const preferredActionEntries = PREFERRED_ACTION_TITLES.flatMap((title) => {
     const item = items.find((candidate) => candidate.type === 'button' && candidate.title?.startsWith(title));
 
@@ -16,7 +16,22 @@ export function reorderEditorMenu(items) {
       ...(ACTION_LABELS.has(title) ? { text: ACTION_LABELS.get(title) } : {})
     };
 
-    return title === 'Compact JSON:' ? [action, { type: 'separator' }] : [action];
+    if (title === 'Compact JSON:') {
+      const smartFormatAction = mode === 'text' && onSmartFormat
+        ? [{
+            type: 'button',
+            text: '智能格式化',
+            title: '智能格式化 JSON (Ctrl+J)',
+            className: 'jse-format-smart',
+            onClick: onSmartFormat,
+            disabled: item.disabled
+          }]
+        : [];
+
+      return [...smartFormatAction, action, { type: 'separator' }];
+    }
+
+    return [action];
   });
   const preferredActionItems = preferredActionEntries.map(({ item }) => item);
   const remainingItems = items.filter((item) => !preferredActionItems.includes(item));

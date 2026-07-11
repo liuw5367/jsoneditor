@@ -72,8 +72,24 @@ describe('editor menu', () => {
 
     const reordered = reorderEditorMenu(items);
 
-    assert.equal(reordered[1].text, '美化 JSON');
-    assert.equal(reordered[2].text, '压缩');
+    assert.equal(reordered[1].text, '格式化');
+    assert.equal(reordered[2].text, '单行');
+  });
+
+  test('inserts smart formatting between regular formatting and compacting in text mode', () => {
+    const onSmartFormat = () => {};
+    const items = [
+      button('Switch to text mode (current mode: text)'),
+      button('Format JSON: add proper indentation'),
+      button('Compact JSON: remove whitespace')
+    ];
+
+    const reordered = reorderEditorMenu(items, { mode: 'text', onSmartFormat });
+
+    assert.equal(reordered[1].text, '格式化');
+    assert.equal(reordered[2].text, '智能格式化');
+    assert.equal(reordered[2].onClick, onSmartFormat);
+    assert.equal(reordered[3].text, '单行');
   });
 
   test('keeps unknown items and their relative order', () => {

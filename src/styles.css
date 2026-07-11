@@ -709,6 +709,7 @@ button:active:not(:disabled) {
 }
 
 .editor .jse-menu button.jse-format,
+.editor .jse-menu button.jse-format-smart,
 .editor .jse-menu button.jse-compact {
     width: auto;
     gap: var(--space-1);
@@ -716,7 +717,8 @@ button:active:not(:disabled) {
     font-size: 12px;
 }
 
-.rename-dialog {
+.rename-dialog,
+.settings-dialog {
     width: min(360px, calc(100vw - 32px));
     border: 1px solid #c4ccbd;
     padding: 16px;
@@ -724,11 +726,13 @@ button:active:not(:disabled) {
     box-shadow: 0 18px 48px rgb(28 40 28 / 20%);
 }
 
-.rename-dialog::backdrop {
+.rename-dialog::backdrop,
+.settings-dialog::backdrop {
     background: rgb(18 24 18 / 28%);
 }
 
-.rename-dialog form {
+.rename-dialog form,
+.settings-dialog form {
     display: grid;
     gap: 12px;
 }
@@ -753,6 +757,46 @@ button:active:not(:disabled) {
 .rename-input:focus {
     border-color: #2f684c;
     outline: 3px solid #d5ebdc;
+}
+
+.settings-button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.settings-label {
+    color: var(--color-text);
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.settings-help {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.settings-input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    padding: 0 var(--space-4);
+    color: var(--color-text);
+    background: #ffffff;
+    font: inherit;
+}
+
+.settings-input:focus {
+    border-color: var(--color-accent);
+    outline: 3px solid #d5ebdc;
+}
+
+.settings-error {
+    margin: 0;
+    color: var(--color-danger);
+    font-size: 12px;
 }
 
 .dialog-actions {

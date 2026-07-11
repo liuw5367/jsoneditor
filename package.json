@@ -15,6 +15,7 @@
     "@codemirror/merge": "^6.12.2",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.43.1",
+    "fracturedjsonjs": "5.0.1",
     "jsondiffpatch": "^0.7.6",
     "vanilla-jsoneditor": "^3.12.0"
   },
