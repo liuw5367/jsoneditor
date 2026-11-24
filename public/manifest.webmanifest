@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "JSON Editor",
+  "short_name": "JSON Editor",
+  "description": "本地 JSON 编辑、格式化与差异对比工具",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#183c34",
+  "background_color": "#f4f6f1",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

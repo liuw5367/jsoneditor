@@ -4,6 +4,17 @@ import { MergeView } from '@codemirror/merge';
 import { EditorView, lineNumbers } from '@codemirror/view';
 import './styles.css';
 
+// 仅生产版本注册离线缓存，避免开发资源被旧版本缓存覆盖。
+if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(new URL('./sw.js', document.baseURI), {
+      updateViaCache: 'none'
+    }).catch((error) => {
+      console.warn('离线缓存注册失败，当前页面仍可在线使用。', error);
+    });
+  }, { once: true });
+}
+
 import { contentToText, getInitialContent, isJsonText, saveDraft } from './content.js';
 import { getFileListEmptyMessage, restoreDirectorySession } from './directory-session.js';
 import { createJsonFilename, downloadJsonText } from './download.js';
